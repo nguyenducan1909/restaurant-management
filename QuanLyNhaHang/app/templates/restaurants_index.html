@@ -1,0 +1,47 @@
+{% extends "layout/base.html" %}
+{% block title %}Danh sách nhà hàng{% endblock %}
+{% block content %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form class="row g-2" method="get">
+      <div class="col-md-6">
+        <input type="text" class="form-control" name="q" value="{{ q }}" placeholder="Tìm tên hoặc địa chỉ...">
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" name="is_open">
+          <option value="" {% if not is_open %}selected{% endif %}>Tất cả</option>
+          <option value="1" {% if is_open == "1" %}selected{% endif %}>Đang mở cửa</option>
+          <option value="0" {% if is_open == "0" %}selected{% endif %}>Đang đóng</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-primary w-100" type="submit">Tìm kiếm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3">
+  {% for r in restaurants %}
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">
+          <a href="{{ url_for('restaurant_detail', restaurant_id=r.id) }}">{{ r.name }}</a>
+        </h5>
+        <p class="mb-1 text-muted">{{ r.address }}</p>
+        <small>☎ {{ r.phone }}</small><br>
+        {% if r.is_open %}
+          <span class="badge bg-success">Mở cửa</span>
+        {% else %}
+          <span class="badge bg-danger">Đóng cửa</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+    <p>Không có nhà hàng nào.</p>
+  {% endfor %}
+</div>
+{% endblock %}
+pip

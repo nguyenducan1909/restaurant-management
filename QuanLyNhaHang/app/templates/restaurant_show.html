@@ -1,0 +1,16 @@
+{% extends "layout/base.html" %}
+{% block title %}{{ r.name }}{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    <h3>{{ r.name }}</h3>
+    <p>Địa chỉ: {{ r.address }}</p>
+    <p>Điện thoại: {{ r.phone }}</p>
+    {% if r.is_open %}
+      <span class="badge bg-success">Mở cửa</span>
+    {% else %}
+      <span class="badge bg-danger">Đóng cửa</span>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

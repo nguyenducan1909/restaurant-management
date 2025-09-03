@@ -1,0 +1,55 @@
+{% extends "layout/base.html" %}
+{% block title %}Chuyển khoản ngân hàng (Mô phỏng){% endblock %}
+{% block content %}
+<div class="card mx-auto" style="max-width: 720px;">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Thanh toán chuyển khoản</h5>
+    <span class="badge bg-info">Đơn #{{ order.id }}</span>
+  </div>
+  <div class="card-body">
+    <p class="text-muted">Vui lòng chuyển khoản theo thông tin bên dưới. Đây là trang mô phỏng, bạn có thể nhấn "Tôi đã chuyển khoản" để hoàn tất.</p>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-2">Thông tin tài khoản nhận</div>
+          <div class="small text-muted">Ngân hàng</div>
+          <div class="mb-2">DemoBank (CTY CP DEMO)</div>
+          <div class="small text-muted">Chủ tài khoản</div>
+          <div class="mb-2">CONG TY FOODHUB</div>
+          <div class="small text-muted">Số tài khoản</div>
+          <div class="mb-2">123 456 7890</div>
+          <div class="small text-muted">Chi nhánh</div>
+          <div>TP. Hồ Chí Minh</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-2">Nội dung & Số tiền</div>
+          <div class="small text-muted">Số tiền cần chuyển</div>
+          <div class="fs-5 fw-bold mb-2">{{ '%.0f' | format(payment.amount) }} đ</div>
+          <div class="small text-muted">Nội dung chuyển khoản</div>
+          <div class="mb-2">FOODHUB-ORDER-{{ order.id }}</div>
+          <div class="small text-muted">Gợi ý</div>
+          <ul class="mb-0">
+            <li>Nhập đúng nội dung để hệ thống đối soát.</li>
+            <li>Giữ biên lai/ảnh chụp màn hình sau khi chuyển.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <hr class="my-4"/>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-success" href="{{ url_for('payment_callback', order_id=order.id, result='success') }}">
+        Tôi đã chuyển khoản
+      </a>
+      <a class="btn btn-outline-danger" href="{{ url_for('payment_callback', order_id=order.id, result='fail') }}">
+        Hủy / Thanh toán thất bại
+      </a>
+      <a class="btn btn-secondary" href="{{ url_for('restaurant_list') }}">Quay lại danh sách nhà hàng</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

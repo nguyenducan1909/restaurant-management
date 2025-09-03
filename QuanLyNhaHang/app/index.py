@@ -1,13 +1,12 @@
-# --- YÊU CẦU 2: ROUTES XEM THỰC ĐƠN + THÊM GIỎ HÀNG ---
-from urllib import response
 
 from flask import render_template, request, redirect, url_for, flash, session
-from flask_login import current_user
+from flask_login import current_user, login_user, logout_user, login_required
 from QuanLyNhaHang.app import app, dao
 
 @app.route('/')
 def index():
-    return "hello world"
+    return redirect(url_for('restaurant_list'))
+
 
 @app.route("/restaurants")
 def restaurant_list():
@@ -43,6 +42,84 @@ def add_to_cart():
     ok, msg = dao.add_item_to_cart(user_id, restaurant_id, item_id, qty)
     flash(msg, "success" if ok else "danger")
     return redirect(url_for("restaurant_detail", restaurant_id=restaurant_id, added=int(ok)))
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('restaurant_list'))
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        remember = bool(request.form.get("remember"))
+
+        if not username or not password:
+            flash("Vui lòng nhập đầy đủ thông tin", "danger")
+            return render_template("auth/login.html")
+
+        success, result = dao.authenticate_user(username, password)
+        if success:
+            login_user(result, remember=remember)
+            flash(f"Chào mừng {result.full_name or result.username}!", "success")
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('restaurant_list'))
+        else:
+            flash(result, "danger")
+
+    return render_template("auth/login.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('restaurant_list'))
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+        full_name = request.form.get("full_name", "").strip()
+        phone = request.form.get("phone", "").strip()
+
+        # Validation
+        if not all([username, email, password, confirm_password]):
+            flash("Vui lòng nhập đầy đủ thông tin bắt buộc", "danger")
+            return render_template("auth/register.html")
+
+        if password != confirm_password:
+            flash("Mật khẩu xác nhận không khớp", "danger")
+            return render_template("auth/register.html")
+
+        if len(password) < 6:
+            flash("Mật khẩu phải có ít nhất 6 ký tự", "danger")
+            return render_template("auth/register.html")
+
+        success, result = dao.create_user(
+            username=username,
+            email=email,
+            password=password,
+            full_name=full_name or None,
+            phone=phone or None
+        )
+
+        if success:
+            flash("Đăng ký thành công! Vui lòng đăng nhập.", "success")
+            return redirect(url_for('login'))
+        else:
+            flash(result, "danger")
+
+    return render_template("auth/register.html")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("Đã đăng xuất thành công", "success")
+    return redirect(url_for('restaurant_list'))
+
 
 if __name__ == "__main__":
     app.run(debug=True)

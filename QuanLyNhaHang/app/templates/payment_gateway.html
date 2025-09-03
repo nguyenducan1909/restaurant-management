@@ -1,0 +1,16 @@
+{% extends "layout/base.html" %}
+{% block title %}Cổng thanh toán (Mô phỏng){% endblock %}
+{% block content %}
+<div class="card mx-auto" style="max-width: 560px;">
+  <div class="card-header"><h5 class="mb-0">Cổng thanh toán mô phỏng</h5></div>
+  <div class="card-body">
+    <p>Đây là trang mô phỏng cổng thanh toán để kiểm thử luồng giao dịch ONLINE.</p>
+    <p class="mb-1">Mã đơn hàng: <strong>#{{ order_id }}</strong></p>
+    <p class="mb-4">Phương thức: <strong>{{ method }}</strong></p>
+    <div class="d-flex gap-2">
+      <a class="btn btn-success" href="{{ url_for('payment_callback', order_id=order_id, result='success') }}">Thanh toán thành công</a>
+      <a class="btn btn-outline-danger" href="{{ url_for('payment_callback', order_id=order_id, result='fail') }}">Thanh toán thất bại</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

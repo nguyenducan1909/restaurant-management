@@ -1,9 +1,15 @@
 # --- YÊU CẦU 2: DAO CHO NHÀ HÀNG / THỰC ĐƠN / GIỎ HÀNG ---
 from sqlalchemy import or_
+
+
+
+from models import User
+
 from QuanLyNhaHang.app import db
 from models import Restaurant, Item, Cart, CartItem, Order, OrderItem, Payment
 from decimal import Decimal
 from sqlalchemy import or_, func
+
 
 def get_restaurants(q=None, is_open=None):
     query = Restaurant.query
@@ -55,6 +61,50 @@ def add_item_to_cart(user_id: int, restaurant_id: int, item_id: int, qty: int = 
     db.session.commit()
     return True, "Đã thêm vào giỏ"
 
+
+
+
+
+
+def get_user_by_username(username):
+    return User.query.filter_by(username=username).first()
+
+
+def get_user_by_email(email):
+    return User.query.filter_by(email=email).first()
+
+
+def create_user(username, email, password, full_name=None, phone=None):
+    # Kiểm tra username đã tồn tại
+    if get_user_by_username(username):
+        return False, "Tên đăng nhập đã tồn tại"
+
+    # Kiểm tra email đã tồn tại
+    if get_user_by_email(email):
+        return False, "Email đã được sử dụng"
+
+    try:
+        user = User(
+            username=username,
+            email=email,
+            full_name=full_name,
+            phone=phone
+        )
+        user.set_password(password)
+
+        db.session.add(user)
+        db.session.commit()
+        return True, user
+    except Exception as e:
+        db.session.rollback()
+        return False, f"Lỗi tạo tài khoản: {str(e)}"
+
+
+def authenticate_user(username, password):
+    user = get_user_by_username(username)
+    if user and user.check_password(password):
+        return True, user
+    return False, "Tên đăng nhập hoặc mật khẩu không đúng"
 
 #DDD
 def get_active_cart_detail(user_id: int, restaurant_id: int):
@@ -174,3 +224,4 @@ def get_payment_info(order_id: int):
         return None, None
     payment = Payment.query.filter_by(order_id=order.id).first()
     return order, payment
+

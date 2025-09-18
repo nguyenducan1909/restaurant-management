@@ -6,8 +6,13 @@
   <div class="card-body">
     <form class="row g-2" method="get" action="{{ url_for('restaurant_list') }}">
       <div class="col-md-6">
-        <input type="text" class="form-control" name="q" placeholder="Tìm theo tên/địa chỉ..."
-               value="{{ q or '' }}" />
+        <input
+          type="text"
+          class="form-control"
+          name="q"
+          placeholder="Tìm theo tên/địa chỉ..."
+          value="{{ q or '' }}"
+        />
       </div>
       <div class="col-md-3">
         <select class="form-select" name="is_open">
@@ -20,30 +25,86 @@
         <button class="btn btn-primary w-100" type="submit">Tìm kiếm</button>
       </div>
     </form>
+
+    {% if q or is_open %}
+      <div class="mt-2 d-flex align-items-center gap-2">
+        <small class="text-muted">
+          Bộ lọc hiện tại:
+          {% if q %}<span class="badge bg-light text-dark">Từ khóa: “{{ q }}”</span>{% endif %}
+          {% if is_open in ['0','1'] %}
+            <span class="badge {{ is_open == '1' and 'bg-success' or 'bg-secondary' }}">
+              {{ is_open == '1' and 'Chỉ mở cửa' or 'Chỉ đóng cửa' }}
+            </span>
+          {% endif %}
+        </small>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('restaurant_list') }}">Xóa lọc</a>
+      </div>
+    {% endif %}
   </div>
 </div>
 
-<div class="row g-3">
-  {% for r in restaurants %}
-    <div class="col-md-6">
-      <div class="card h-100">
-        <div class="card-body">
-          <h5 class="card-title mb-1">
-            <a href="{{ url_for('restaurant_detail', restaurant_id=r.id) }}">{{ r.name }}</a>
-          </h5>
-          {% if r.address %}<div class="mb-1">{{ r.address }}</div>{% endif %}
-          {% if r.phone %}<div class="mb-2 text-muted">{{ r.phone }}</div>{% endif %}
-          {% if r.is_open %}
-            <span class="badge bg-success">Mở cửa</span>
-          {% else %}
-            <span class="badge bg-danger">Đóng cửa</span>
-          {% endif %}
+{% if restaurants and restaurants|length > 0 %}
+  <div class="mb-2">
+    <span class="text-muted small">{{ restaurants|length }} nhà hàng</span>
+  </div>
+
+  <div class="row g-3">
+    {% for r in restaurants %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+          {# Ảnh đại diện nhà hàng (fallback placeholder nếu thiếu) #}
+          {% set cover = r.image_url or url_for('static', filename='img/restaurant-placeholder.jpg') %}
+          <img src="{{ cover }}"
+               alt="{{ r.name }}"
+               class="card-img-top object-fit-cover"
+               style="height: 180px;">
+
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex align-items-start justify-content-between">
+              <h5 class="card-title mb-1">
+                <a class="text-decoration-none" href="{{ url_for('restaurant_detail', restaurant_id=r.id) }}">{{ r.name }}</a>
+              </h5>
+              {% if r.is_open %}
+                <span class="badge rounded-pill bg-success">Mở cửa</span>
+              {% else %}
+                <span class="badge rounded-pill bg-danger">Đóng cửa</span>
+              {% endif %}
+            </div>
+
+            {% if r.address %}
+              <div class="text-muted small mt-1">
+                <i class="bi bi-geo-alt me-1"></i>{{ r.address }}
+              </div>
+            {% endif %}
+            {% if r.phone %}
+              <div class="text-muted small">
+                <i class="bi bi-telephone me-1"></i>{{ r.phone }}
+              </div>
+            {% endif %}
+
+            {# Nếu muốn: đếm số món đang bán (dựa trên relationship). Có thể bỏ nếu sợ nặng query. #}
+            {% if r.items is defined %}
+              {% set available = r.items | selectattr('is_available', 'equalto', True) | list | length %}
+              <div class="small mt-2">
+                <span class="badge bg-light text-dark">Đang bán: {{ available }} món</span>
+              </div>
+            {% endif %}
+
+            <div class="mt-auto pt-2">
+              <a href="{{ url_for('restaurant_detail', restaurant_id=r.id) }}"
+                 class="btn btn-outline-primary w-100">
+                Xem thực đơn
+              </a>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  {% else %}
-    <p class="text-muted">Không tìm thấy nhà hàng phù hợp.</p>
-  {% endfor %}
-</div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-warning">
+    Không tìm thấy nhà hàng phù hợp.
+  </div>
+{% endif %}
 
 {% endblock %}

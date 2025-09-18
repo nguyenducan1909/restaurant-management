@@ -1,0 +1,72 @@
+{% extends "layout/base.html" %}
+{% block title %}Giỏ hàng - {{ r.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <a class="btn btn-link" href="{{ url_for('restaurant_detail', restaurant_id=r.id) }}">&larr; Quay lại thực đơn</a>
+  <a class="btn btn-outline-secondary" href="{{ url_for('restaurant_list') }}">Danh sách nhà hàng</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0">Giỏ hàng của bạn</h5>
+  </div>
+  <div class="card-body p-0">
+    {% if rows %}
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Món</th>
+              <th class="text-end">Đơn giá</th>
+              <th class="text-center">Số lượng</th>
+              <th class="text-end">Thành tiền</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for it in rows %}
+            <tr>
+              <td class="fw-semibold">{{ it.item_name }}</td>
+              <td class="text-end">{{ '%.0f' | format(it.unit_price) }} đ</td>
+              <td class="text-center" style="width: 180px;">
+                <form class="d-inline-flex align-items-center gap-2" method="post" action="{{ url_for('update_cart') }}">
+                  <input type="hidden" name="restaurant_id" value="{{ r.id }}"/>
+                  <input type="hidden" name="cart_id" value="{{ cart.id }}"/>
+                  <input type="hidden" name="item_id" value="{{ it.item_id }}"/>
+                  <div class="input-group">
+                    <button class="btn btn-outline-secondary" type="button" onclick="this.nextElementSibling.stepDown(); this.nextElementSibling.dispatchEvent(new Event('change'))">-</button>
+                    <input class="form-control text-center" type="number" min="0" name="quantity" value="{{ it.quantity }}" onchange="this.form.submit()"/>
+                    <button class="btn btn-outline-secondary" type="button" onclick="this.previousElementSibling.stepUp(); this.previousElementSibling.dispatchEvent(new Event('change'))">+</button>
+                  </div>
+                </form>
+              </td>
+              <td class="text-end fw-semibold">{{ '%.0f' | format(it.line_total) }} đ</td>
+              <td class="text-end">
+                <form method="post" action="{{ url_for('remove_from_cart') }}" onsubmit="return confirm('Xóa món này?')">
+                  <input type="hidden" name="restaurant_id" value="{{ r.id }}"/>
+                  <input type="hidden" name="cart_id" value="{{ cart.id }}"/>
+                  <input type="hidden" name="item_id" value="{{ it.item_id }}"/>
+                  <button class="btn btn-link text-danger">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="p-3 d-flex justify-content-between align-items-center">
+        <div class="text-muted">Nhà hàng: <strong>{{ r.name }}</strong></div>
+        <div class="fs-5">Tổng tiền: <strong>{{ '%.0f' | format(total) }} đ</strong></div>
+      </div>
+    {% else %}
+      <div class="p-4 text-center text-muted">
+        Giỏ hàng trống. Hãy thêm vài món từ thực đơn.
+      </div>
+    {% endif %}
+  </div>
+  <div class="card-footer d-flex justify-content-end gap-2">
+    <a class="btn btn-outline-secondary" href="{{ url_for('restaurant_detail', restaurant_id=r.id) }}">Tiếp tục chọn món</a>
+    <a class="btn btn-primary {{ not rows and 'disabled' or '' }}" href="{{ url_for('checkout_form', restaurant_id=r.id) }}">Tiến hành đặt hàng</a>
+  </div>
+</div>
+{% endblock %}

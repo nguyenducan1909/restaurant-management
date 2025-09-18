@@ -7,7 +7,7 @@ app = Flask(__name__)
 app.secret_key = '@#$%^*&A^D&A(D*D*^A&%^D$^%&DAY*UAD*AD^&'
 app.config[
     "SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:%s@localhost/foodhub?charset=utf8mb4" % quote(
-    'admin123')
+    '123456')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)

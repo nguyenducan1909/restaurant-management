@@ -1,8 +1,16 @@
 # --- YÊU CẦU 2: DAO CHO NHÀ HÀNG / THỰC ĐƠN / GIỎ HÀNG ---
 from sqlalchemy import or_
-from models import Restaurant, Item, Cart, CartItem
-from QuanLyNhaHang.app import db
+
+
+
 from models import User
+
+from QuanLyNhaHang.app import db
+from models import Restaurant, Item, Cart, CartItem, Order, OrderItem, Payment
+from decimal import Decimal
+from sqlalchemy import or_, func
+
+
 def get_restaurants(q=None, is_open=None):
     query = Restaurant.query
     if q:
@@ -57,6 +65,7 @@ def add_item_to_cart(user_id: int, restaurant_id: int, item_id: int, qty: int = 
 
 
 
+
 def get_user_by_username(username):
     return User.query.filter_by(username=username).first()
 
@@ -96,3 +105,123 @@ def authenticate_user(username, password):
     if user and user.check_password(password):
         return True, user
     return False, "Tên đăng nhập hoặc mật khẩu không đúng"
+
+#DDD
+def get_active_cart_detail(user_id: int, restaurant_id: int):
+    cart = get_or_create_active_cart(user_id, restaurant_id)
+    rows = db.session.query(
+        CartItem.item_id,
+        CartItem.quantity,
+        Item.name.label('item_name'),
+        Item.price.label('unit_price'),
+        (Item.price * CartItem.quantity).label('line_total')
+    ).join(Item, Item.id == CartItem.item_id).filter(CartItem.cart_id == cart.id).all()
+
+    items = [
+        {
+            "item_id": r.item_id,
+            "item_name": r.item_name,
+            "unit_price": Decimal(r.unit_price),
+            "quantity": int(r.quantity),
+            "line_total": Decimal(r.line_total),
+        } for r in rows
+    ]
+    total_amount = sum(i["line_total"] for i in items) if items else Decimal('0')
+    return cart, items, total_amount
+
+def update_cart_item_quantity(cart_id: int, item_id: int, quantity: int):
+    row = CartItem.query.filter_by(cart_id=cart_id, item_id=item_id).first()
+    if not row:
+        return False, "Không tìm thấy món trong giỏ"
+    if quantity <= 0:
+        db.session.delete(row)
+    else:
+        row.quantity = quantity
+    db.session.commit()
+    return True, "Cập nhật giỏ hàng thành công"
+
+def remove_item_from_cart(cart_id: int, item_id: int):
+    row = CartItem.query.filter_by(cart_id=cart_id, item_id=item_id).first()
+    if not row:
+        return False, "Không tìm thấy món trong giỏ"
+    db.session.delete(row)
+    db.session.commit()
+    return True, "Đã xóa món khỏi giỏ"
+
+
+# ----------------
+# ORDER & PAYMENT
+# ----------------
+def create_order_from_cart(user_id: int, restaurant_id: int, ship_name: str, ship_phone: str, ship_address: str, payment_method: str):
+    cart, items, total = get_active_cart_detail(user_id, restaurant_id)
+    if not items:
+        return False, "Giỏ hàng trống", None
+
+    order = Order(
+        user_id=user_id,
+        restaurant_id=restaurant_id,
+        status="PENDING",
+        payment_status="UNPAID",
+        payment_method=payment_method,
+        ship_name=(ship_name or '').strip()[:120],
+        ship_phone=(ship_phone or '').strip()[:30],
+        ship_address=(ship_address or '').strip()[:255],
+        total_amount=total
+    )
+    db.session.add(order)
+    db.session.flush()  # có order.id
+
+    for it in items:
+        db.session.add(OrderItem(
+            order_id=order.id,
+            item_id=it["item_id"],
+            item_name=it["item_name"],
+            unit_price=it["unit_price"],
+            quantity=it["quantity"],
+            line_total=it["line_total"]
+        ))
+
+    # COD => thanh toán thành công ngay
+    if payment_method == "COD":
+        order.payment_status = "PAID"
+        pay = Payment(order_id=order.id, amount=total, method="COD", status="SUCCEEDED", paid_at=func.now())
+        db.session.add(pay)
+        cart.status = "CHECKED_OUT"
+        db.session.commit()
+        return True, "Đặt hàng thành công (COD)", order
+
+    # method khác: tạo giao dịch chờ
+    pay = Payment(order_id=order.id, amount=total, method=payment_method, status="PENDING", paid_at=None)
+    db.session.add(pay)
+    cart.status = "CHECKED_OUT"
+    db.session.commit()
+    return True, "Tạo đơn hàng thành công, chuyển đến cổng thanh toán", order
+
+def update_payment_result(order_id: int, result: str):
+    order = Order.query.get(order_id)
+    if not order:
+        return False, "Không tìm thấy đơn hàng"
+    pay = Payment.query.filter_by(order_id=order.id).first()
+    if not pay:
+        return False, "Thiếu giao dịch thanh toán"
+
+    if result == "success":
+        pay.status = "SUCCEEDED"
+        order.payment_status = "PAID"
+        pay.paid_at = func.now()
+    else:
+        pay.status = "FAILED"
+    db.session.commit()
+    return True, "Cập nhật thanh toán thành công"
+
+# ----------------
+# Helper: lấy order & payment để hiển thị trang chuyển khoản
+# ----------------
+def get_payment_info(order_id: int):
+    """Trả về (order, payment) theo order_id, hoặc (None, None) nếu không có."""
+    order = Order.query.get(order_id)
+    if not order:
+        return None, None
+    payment = Payment.query.filter_by(order_id=order.id).first()
+    return order, payment
+

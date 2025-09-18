@@ -1,0 +1,116 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Đăng ký - FoodHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow">
+      <div class="card-header bg-success text-white text-center">
+        <h4 class="mb-0">
+          <i class="fas fa-user-plus me-2"></i>Đăng ký tài khoản
+        </h4>
+      </div>
+      <div class="card-body">
+        <form method="POST" id="registerForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="username" class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="username" name="username" required
+                     pattern="[a-zA-Z0-9_]{3,20}" title="3-20 ký tự, chỉ chứa chữ, số và dấu gạch dưới">
+              <div class="form-text">3-20 ký tự, chỉ chứa chữ, số và dấu gạch dưới</div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="full_name" class="form-label">Họ và tên</label>
+            <input type="text" class="form-control" id="full_name" name="full_name">
+          </div>
+          
+          <div class="mb-3">
+            <label for="phone" class="form-label">Số điện thoại</label>
+            <input type="tel" class="form-control" id="phone" name="phone"
+                   pattern="[0-9]{10,11}" title="Số điện thoại 10-11 chữ số">
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="password" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+              <input type="password" class="form-control" id="password" name="password" required
+                     minlength="6">
+              <div class="form-text">Ít nhất 6 ký tự</div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label for="confirm_password" class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+              <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+              <div id="passwordError" class="text-danger small" style="display: none;">
+                Mật khẩu xác nhận không khớp
+              </div>
+            </div>
+          </div>
+          
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-user-plus me-2"></i>Đăng ký
+            </button>
+          </div>
+        </form>
+        
+        <hr>
+        
+        <div class="text-center">
+          <p class="mb-0">Đã có tài khoản? 
+            <a href="{{ url_for('login') }}" class="text-decoration-none">
+              Đăng nhập ngay
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('registerForm');
+  const password = document.getElementById('password');
+  const confirmPassword = document.getElementById('confirm_password');
+  const passwordError = document.getElementById('passwordError');
+  
+  // Focus vào username field khi load trang
+  document.getElementById('username').focus();
+  
+  // Kiểm tra mật khẩu khớp
+  function checkPasswordMatch() {
+    if (confirmPassword.value && password.value !== confirmPassword.value) {
+      passwordError.style.display = 'block';
+      confirmPassword.classList.add('is-invalid');
+      return false;
+    } else {
+      passwordError.style.display = 'none';
+      confirmPassword.classList.remove('is-invalid');
+      return true;
+    }
+  }
+  
+  password.addEventListener('input', checkPasswordMatch);
+  confirmPassword.addEventListener('input', checkPasswordMatch);
+  
+  // Validate form trước khi submit
+  form.addEventListener('submit', function(e) {
+    if (!checkPasswordMatch()) {
+      e.preventDefault();
+      confirmPassword.focus();
+    }
+  });
+});
+</script>
+{% endblock %}

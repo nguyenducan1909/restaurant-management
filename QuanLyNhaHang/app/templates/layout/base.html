@@ -8,34 +8,84 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
 
     {% block extra_css %}{% endblock %}
-</head>
-<body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
-    <div class="container">
-        <a class="navbar-brand" href="{{ url_for('restaurant_list') }}">FoodHub</a>
-        <a class="btn btn-outline-primary" href="{{ url_for('show_cart', restaurant_id=1) }}">
-            Xem giỏ hàng
-        </a>
-    </div>
-</nav>
 
-<main class="container">
-    <!-- Flash messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="mb-3">
-        {% for category, msg in messages %}
-        <div class="alert alert-{{ 'warning' if category == 'message' else category }} mb-2">{{ msg }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+  </head>
+  <body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('restaurant_list') }}">
+          <i class="fas fa-utensils me-2"></i>FoodHub
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('restaurant_list') }}">Nhà hàng</a>
+            </li>
+          </ul>
+
+          <ul class="navbar-nav">
+            {% if current_user.is_authenticated %}
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-user me-1"></i>{{ current_user.full_name or current_user.username }}
+                </a>
+                <ul class="dropdown-menu">
+                  <li><h6 class="dropdown-header">Xin chào!</h6></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <a class="dropdown-item" href="{{ url_for('logout') }}">
+                      <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                    </a>
+                  </li>
+                </ul>
+              </li>
+            {% else %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('login') }}">
+                  <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('register') }}">
+                  <i class="fas fa-user-plus me-1"></i>Đăng ký
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container">
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-3">
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ 'warning' if category == 'message' else category }} alert-dismissible fade show" role="alert">
+                {{ msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
 
     {% block content %}{% endblock %}
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-{% block extra_js %}{% endblock %}
-</body>
+    <!-- Font Awesome for icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+  </body>
 </html>
+
